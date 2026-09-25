@@ -31,7 +31,22 @@ export interface FarmTask {
   priority: string;
   recommendedMachine: string;
   recommendedDriver: string;
+  assignedMachine: string;
+  assignedDriver: string;
+  failureReason: string;
   plannedWindow: string;
+}
+
+// 派单/改期/撤单统一结果。
+export interface TaskActionResult {
+  taskId: string;
+  status: string;
+  assignedMachine?: string;
+  assignedDriver?: string;
+  plannedWindow?: string;
+  machineStatus?: string;
+  message: string;
+  failureReason?: string;
 }
 
 export interface TrackPoint {

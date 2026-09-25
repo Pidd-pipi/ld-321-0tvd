@@ -44,50 +44,11 @@ func (s *DashboardService) Overview(ctx context.Context) (*model.FarmOverview, e
 	return ov, nil
 }
 
-// Invalidate 使缓存失效（派单后调用）。
+// Invalidate 使缓存失效（派单/改期/撤单后调用）。
 func (s *DashboardService) Invalidate(ctx context.Context) {
 	if err := s.redis.Del(ctx, constants.OverviewCacheKey).Err(); err != nil {
 		s.logger.Warn("invalidate overview cache failed", "err", err)
 	}
-}
-
-// Dispatch 派单：将任务置为已派单，并同步更新农机状态为作业中。
-func (s *DashboardService) Dispatch(ctx context.Context, taskID string) (map[string]interface{}, error) {
-	task, err := s.repo.FindTask(taskID)
-	if err != nil {
-		return nil, err
-	}
-	if task.Status == constants.TaskDispatched || task.Status == constants.TaskDone {
-		return nil, fmt.Errorf("task %s is already %s", taskID, task.Status)
-	}
-	if task.RecommendedMachine == "" {
-		task.RecommendedMachine = "NJ-2026-002"
-	}
-	if task.RecommendedDriver == "" {
-		task.RecommendedDriver = "何燕"
-	}
-
-	machine, err := s.repo.FindMachineByCode(task.RecommendedMachine)
-	if err != nil {
-		return nil, err
-	}
-	machine.Status = constants.MachineWorking
-	machine.CurrentTask = fmt.Sprintf("%s %s", task.Type, task.Field)
-	if err := s.repo.UpdateMachine(machine); err != nil {
-		return nil, err
-	}
-
-	task.Status = constants.TaskDispatched
-	if err := s.repo.UpdateTask(task); err != nil {
-		return nil, err
-	}
-	s.Invalidate(ctx)
-	s.logger.Info("task dispatched", "taskId", taskID, "machine", task.RecommendedMachine, "driver", task.RecommendedDriver)
-	return map[string]interface{}{
-		"taskId":  taskID,
-		"status":  constants.TaskDispatched,
-		"message": "系统已按空闲度和驾驶员排班完成推荐派单",
-	}, nil
 }
 
 // ExportReport 作业报表导出信息。
@@ -101,4 +62,24 @@ func (s *DashboardService) ExportReport(ctx context.Context) (map[string]interfa
 		"rows":     len(ov.Records),
 		"status":   "ready",
 	}, nil
+}
+
+// persistFailure 业务失败也要落库失败原因，保证任务卡能展示（独立事务，不随主事务回滚）。
+func (s *DashboardService) persistFailure(ctx context.Context, taskID, reason string) {
+	task, err := s.repo.FindTask(taskID)
+	if err != nil {
+		s.logger.Warn("load task for failure reason failed", "taskId", taskID, "err", err)
+		return
+	}
+	task.FailureReason = reason
+	if err := s.repo.SaveTask(task); err != nil {
+		s.logger.Warn("persist failure reason failed", "taskId", taskID, "err", err)
+		return
+	}
+	s.Invalidate(ctx)
+}
+
+// taskCurrentTask 农机当前任务描述。
+func taskCurrentTask(task *model.FarmTask) string {
+	return fmt.Sprintf("%s %s", task.Type, task.Field)
 }

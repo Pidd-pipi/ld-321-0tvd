@@ -52,8 +52,10 @@ func Setup(
 		dash.GET("/reports/work/export", dashboardHandler.ExportReport)
 	}
 
-	// 任务派单（前端调用 /api/tasks/:id/dispatch，经 Nginx 映射到 /api/v1/tasks/:id/dispatch）
+	// 任务派单/改期/撤单（前端调用 /api/tasks/:id/...，经 Nginx 映射到 /api/v1/tasks/:id/...）
 	v1.POST("/tasks/:id/dispatch", dashboardHandler.Dispatch)
+	v1.POST("/tasks/:id/reschedule", dashboardHandler.Reschedule)
+	v1.POST("/tasks/:id/cancel", dashboardHandler.Cancel)
 
 	// WebSocket 实时轨迹
 	r.GET("/ws", func(c *gin.Context) {

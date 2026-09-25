@@ -52,6 +52,10 @@ func Connect(dsn string, maxOpen, maxIdle, connMaxLifetime, retryCount, retryInt
 
 // Seed 幂等种子数据。
 func Seed(db *gorm.DB) error {
+	// 旧库回填：在途任务历史数据只有推荐农机，没有最终指派农机列。
+	if err := backfillAssignedMachine(db); err != nil {
+		return err
+	}
 	var count int64
 	if err := db.Model(&model.User{}).Count(&count).Error; err != nil {
 		return fmt.Errorf("count users: %w", err)
@@ -88,10 +92,10 @@ func Seed(db *gorm.DB) error {
 	}
 	// 任务
 	tasks := []model.FarmTask{
-		{ID: "t1", Type: "耕地", Field: "北岭 1 号田", AreaMu: 180, EstimatedHours: 9.5, Status: "已派单", Priority: "高", RecommendedMachine: "NJ-2026-001", RecommendedDriver: "周明", PlannedWindow: "今日 08:00-18:00"},
+		{ID: "t1", Type: "耕地", Field: "北岭 1 号田", AreaMu: 180, EstimatedHours: 9.5, Status: "已派单", Priority: "高", RecommendedMachine: "NJ-2026-001", RecommendedDriver: "周明", AssignedMachine: "NJ-2026-001", AssignedDriver: "周明", PlannedWindow: "今日 08:00-18:00"},
 		{ID: "t2", Type: "播种", Field: "西坡旱地", AreaMu: 96, EstimatedHours: 6.0, Status: "待派单", Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "何燕", PlannedWindow: "明日 07:30-14:00"},
 		{ID: "t3", Type: "施肥", Field: "南湾稻田", AreaMu: 132, EstimatedHours: 5.5, Status: "待派单", Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "刘强", PlannedWindow: "今日 14:00-20:00"},
-		{ID: "t4", Type: "收割", Field: "东河麦田", AreaMu: 210, EstimatedHours: 11.0, Status: "已完成", Priority: "高", RecommendedMachine: "NJ-2026-004", RecommendedDriver: "周明", PlannedWindow: "昨日 06:30-17:30"},
+		{ID: "t4", Type: "收割", Field: "东河麦田", AreaMu: 210, EstimatedHours: 11.0, Status: "已完成", Priority: "高", RecommendedMachine: "NJ-2026-004", RecommendedDriver: "周明", AssignedMachine: "NJ-2026-004", AssignedDriver: "周明", PlannedWindow: "昨日 06:30-17:30"},
 	}
 	if err := db.Create(&tasks).Error; err != nil {
 		return fmt.Errorf("seed tasks: %w", err)
@@ -135,5 +139,16 @@ func Seed(db *gorm.DB) error {
 		return fmt.Errorf("seed drivers: %w", err)
 	}
 	slog.Info("seeded agridispatch demo data")
+	return nil
+}
+
+// backfillAssignedMachine 回填旧库在途任务的最终指派农机，避免撤单时无法释放农机。
+func backfillAssignedMachine(db *gorm.DB) error {
+	result := db.Model(&model.FarmTask{}).
+		Where("assigned_machine = '' AND recommended_machine <> '' AND status IN ?", []string{"已派单", "已改期"}).
+		Update("assigned_machine", gorm.Expr("recommended_machine"))
+	if result.Error != nil {
+		return fmt.Errorf("backfill assigned machine: %w", result.Error)
+	}
 	return nil
 }

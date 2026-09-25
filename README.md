@@ -87,7 +87,9 @@ go run ./cmd/server
 | POST | /auth/login | 登录 | - |
 | GET | /auth/me | 当前用户 | JWT |
 | GET | /dashboard/overview | 调度看板总览（农机/任务/轨迹/统计/保养/驾驶员） | - |
-| POST | /dashboard/tasks/:id/dispatch | 一键派单（推荐空闲农机与驾驶员） | - |
+| POST | /tasks/:id/dispatch | 一键派单（只占用空闲农机；推荐农机不可用时自动改派另一台空闲农机） | - |
+| POST | /tasks/:id/reschedule | 任务改期（先选定空闲农机再迁移原任务，原任务不丢失） | - |
+| POST | /tasks/:id/cancel | 撤单（农机上无其他在途任务时回到空闲） | - |
 | GET | /dashboard/reports/work/export | 作业报表导出信息 | - |
 | GET | /ws | WebSocket 实时轨迹推送 | - |
 | GET | /healthz | 健康检查（DB + Redis） | - |

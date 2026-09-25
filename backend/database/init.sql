@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS farm_tasks (
   priority VARCHAR(16) DEFAULT '中',
   recommended_machine VARCHAR(64) DEFAULT '',
   recommended_driver VARCHAR(64) DEFAULT '',
+  assigned_machine VARCHAR(64) DEFAULT '',
+  assigned_driver VARCHAR(64) DEFAULT '',
+  failure_reason VARCHAR(255) DEFAULT '',
   planned_window VARCHAR(64) DEFAULT '',
   created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
