@@ -17,20 +17,11 @@ func New(code int, message string) *BusinessError {
 	return &BusinessError{Code: code, Message: message}
 }
 
-// ValidationError 参数校验错误。
-type ValidationError struct {
+// ConflictError 状态冲突错误（如任务状态不允许该操作、没有空闲农机）。
+type ConflictError struct {
 	Message string
 }
 
-func (e *ValidationError) Error() string {
-	return "validation: " + e.Message
-}
-
-// MachineOfflineError 农机离线错误。
-type MachineOfflineError struct {
-	MachineCode string
-}
-
-func (e *MachineOfflineError) Error() string {
-	return fmt.Sprintf("machine %s is offline", e.MachineCode)
+func (e *ConflictError) Error() string {
+	return e.Message
 }

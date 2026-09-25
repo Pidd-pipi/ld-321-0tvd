@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/agridispatch/agridispatch/internal/constants"
 	"github.com/agridispatch/agridispatch/internal/model"
 	"gorm.io/gorm"
 )
@@ -55,9 +56,9 @@ func (r *DashboardRepository) board(ov *model.FarmOverview) model.DispatchBoard 
 	var workingList, dueList []string
 	for _, m := range ov.Machines {
 		switch m.Status {
-		case "空闲":
+		case constants.MachineIdle:
 			idle++
-		case "作业中":
+		case constants.MachineWorking:
 			working++
 			workingList = append(workingList, fmt.Sprintf("%s %s", m.Code, m.CurrentTask))
 		}
@@ -84,48 +85,6 @@ func (r *DashboardRepository) stats(records []model.WorkRecord) model.Stats {
 		s.FuelCost += rec.FuelCost
 	}
 	return s
-}
-
-// FindTask 查找任务。
-func (r *DashboardRepository) FindTask(id string) (*model.FarmTask, error) {
-	var t model.FarmTask
-	err := r.db.First(&t, "id = ?", id).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("find task: %w", err)
-	}
-	return &t, nil
-}
-
-// UpdateTask 更新任务。
-func (r *DashboardRepository) UpdateTask(t *model.FarmTask) error {
-	if err := r.db.Save(t).Error; err != nil {
-		return fmt.Errorf("update task: %w", err)
-	}
-	return nil
-}
-
-// FindMachineByCode 按农机编号查找农机。
-func (r *DashboardRepository) FindMachineByCode(code string) (*model.Machine, error) {
-	var m model.Machine
-	err := r.db.First(&m, "code = ?", code).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("find machine by code: %w", err)
-	}
-	return &m, nil
-}
-
-// UpdateMachine 更新农机。
-func (r *DashboardRepository) UpdateMachine(m *model.Machine) error {
-	if err := r.db.Save(m).Error; err != nil {
-		return fmt.Errorf("update machine: %w", err)
-	}
-	return nil
 }
 
 // UserRepository 用户数据访问。

@@ -15,16 +15,19 @@ const overview = ref<FarmOverview>();
 const loading = ref(true);
 const error = ref('');
 
-onMounted(async () => {
+const loadOverview = async () => {
   try {
     overview.value = await fetchFarmOverview();
+    error.value = '';
     logger.info('farm overview loaded');
   } catch (err) {
     error.value = err instanceof Error ? err.message : '加载失败';
   } finally {
     loading.value = false;
   }
-});
+};
+
+onMounted(loadOverview);
 </script>
 
 <template>
@@ -41,7 +44,7 @@ onMounted(async () => {
       </section>
 
       <section class="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <TaskBoard :tasks="overview.tasks" />
+        <TaskBoard :tasks="overview.tasks" :machines="overview.machines" @changed="loadOverview" />
         <MapTrackPanel :tracks="overview.tracks" />
       </section>
 

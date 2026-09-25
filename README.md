@@ -66,7 +66,7 @@ go run ./cmd/server
 │   └── src/
 │       ├── features/           # DashboardView
 │       ├── components/         # MachineTable/TaskBoard/MapTrackPanel/...
-│       ├── services/           # API 调用（overview/dispatch）
+│       ├── services/           # API 调用（overview/dispatch/reschedule/cancel）
 │       ├── stores/  types/  constants/  logger/  errors/
 └── backend/
     ├── Dockerfile
@@ -87,7 +87,9 @@ go run ./cmd/server
 | POST | /auth/login | 登录 | - |
 | GET | /auth/me | 当前用户 | JWT |
 | GET | /dashboard/overview | 调度看板总览（农机/任务/轨迹/统计/保养/驾驶员） | - |
-| POST | /dashboard/tasks/:id/dispatch | 一键派单（推荐空闲农机与驾驶员） | - |
+| POST | /tasks/:id/dispatch | 一键派单（只占用空闲农机；推荐农机不可用时自动换台；无空闲机时任务保留并返回失败原因） | - |
+| POST | /tasks/:id/reschedule | 改期（body 可选 `{"targetMachine":"...","plannedWindow":"..."}`；先锁定新空闲农机再原子切换，原任务不丢失） | - |
+| POST | /tasks/:id/cancel | 撤单（任务置为已撤单；农机无其他在途任务时回到空闲） | - |
 | GET | /dashboard/reports/work/export | 作业报表导出信息 | - |
 | GET | /ws | WebSocket 实时轨迹推送 | - |
 | GET | /healthz | 健康检查（DB + Redis） | - |

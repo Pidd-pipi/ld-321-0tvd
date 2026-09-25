@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/agridispatch/agridispatch/internal/constants"
 	"github.com/agridispatch/agridispatch/internal/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -79,19 +80,20 @@ func Seed(db *gorm.DB) error {
 	}
 	// 农机
 	machines := []model.Machine{
-		{ID: "m1", Code: "NJ-2026-001", Name: "东方红 1804", Model: "LX1804", PurchasedAt: "2023-03-12", Horsepower: 180, Field: "北岭 1 号田", Status: "作业中", QRCode: "QR-NJ-001", PhotoURL: "/assets/machine-tractor.jpg", WorkHours: 284.5, CurrentTask: "春耕翻地"},
-		{ID: "m2", Code: "NJ-2026-002", Name: "雷沃谷神收割机", Model: "GE80S", PurchasedAt: "2022-09-18", Horsepower: 160, Field: "南湾稻田", Status: "空闲", QRCode: "QR-NJ-002", PhotoURL: "/assets/machine-harvester.jpg", WorkHours: 412.0, CurrentTask: "可派单"},
-		{ID: "m3", Code: "NJ-2026-003", Name: "中联履带拖拉机", Model: "RK140", PurchasedAt: "2024-01-06", Horsepower: 140, Field: "西坡旱地", Status: "维修中", QRCode: "QR-NJ-003", PhotoURL: "/assets/machine-crawler.jpg", WorkHours: 98.0, CurrentTask: "液压检修"},
+		{ID: "m1", Code: "NJ-2026-001", Name: "东方红 1804", Model: "LX1804", PurchasedAt: "2023-03-12", Horsepower: 180, Field: "北岭 1 号田", Status: constants.MachineWorking, QRCode: "QR-NJ-001", PhotoURL: "/assets/machine-tractor.jpg", WorkHours: 284.5, CurrentTask: "春耕翻地"},
+		{ID: "m2", Code: "NJ-2026-002", Name: "雷沃谷神收割机", Model: "GE80S", PurchasedAt: "2022-09-18", Horsepower: 160, Field: "南湾稻田", Status: constants.MachineIdle, QRCode: "QR-NJ-002", PhotoURL: "/assets/machine-harvester.jpg", WorkHours: 412.0, CurrentTask: constants.MachineIdleTaskLabel},
+		{ID: "m3", Code: "NJ-2026-003", Name: "中联履带拖拉机", Model: "RK140", PurchasedAt: "2024-01-06", Horsepower: 140, Field: "西坡旱地", Status: constants.MachineRepair, QRCode: "QR-NJ-003", PhotoURL: "/assets/machine-crawler.jpg", WorkHours: 98.0, CurrentTask: "液压检修"},
+		{ID: "m5", Code: "NJ-2026-005", Name: "沃得猛龙旋耕机", Model: "WG120", PurchasedAt: "2025-02-20", Horsepower: 120, Field: "东河机动备勤", Status: constants.MachineIdle, QRCode: "QR-NJ-005", PhotoURL: "/assets/machine-rotavator.jpg", WorkHours: 56.0, CurrentTask: constants.MachineIdleTaskLabel},
 	}
 	if err := db.Create(&machines).Error; err != nil {
 		return fmt.Errorf("seed machines: %w", err)
 	}
 	// 任务
 	tasks := []model.FarmTask{
-		{ID: "t1", Type: "耕地", Field: "北岭 1 号田", AreaMu: 180, EstimatedHours: 9.5, Status: "已派单", Priority: "高", RecommendedMachine: "NJ-2026-001", RecommendedDriver: "周明", PlannedWindow: "今日 08:00-18:00"},
-		{ID: "t2", Type: "播种", Field: "西坡旱地", AreaMu: 96, EstimatedHours: 6.0, Status: "待派单", Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "何燕", PlannedWindow: "明日 07:30-14:00"},
-		{ID: "t3", Type: "施肥", Field: "南湾稻田", AreaMu: 132, EstimatedHours: 5.5, Status: "待派单", Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "刘强", PlannedWindow: "今日 14:00-20:00"},
-		{ID: "t4", Type: "收割", Field: "东河麦田", AreaMu: 210, EstimatedHours: 11.0, Status: "已完成", Priority: "高", RecommendedMachine: "NJ-2026-004", RecommendedDriver: "周明", PlannedWindow: "昨日 06:30-17:30"},
+		{ID: "t1", Type: "耕地", Field: "北岭 1 号田", AreaMu: 180, EstimatedHours: 9.5, Status: constants.TaskDispatched, Priority: "高", RecommendedMachine: "NJ-2026-001", RecommendedDriver: "周明", AssignedMachine: "NJ-2026-001", PlannedWindow: "今日 08:00-18:00"},
+		{ID: "t2", Type: "播种", Field: "西坡旱地", AreaMu: 96, EstimatedHours: 6.0, Status: constants.TaskPending, Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "何燕", PlannedWindow: "明日 07:30-14:00"},
+		{ID: "t3", Type: "施肥", Field: "南湾稻田", AreaMu: 132, EstimatedHours: 5.5, Status: constants.TaskPending, Priority: "中", RecommendedMachine: "NJ-2026-002", RecommendedDriver: "刘强", PlannedWindow: "今日 14:00-20:00"},
+		{ID: "t4", Type: "收割", Field: "东河麦田", AreaMu: 210, EstimatedHours: 11.0, Status: constants.TaskDone, Priority: "高", RecommendedMachine: "NJ-2026-004", RecommendedDriver: "周明", AssignedMachine: "NJ-2026-004", PlannedWindow: "昨日 06:30-17:30"},
 	}
 	if err := db.Create(&tasks).Error; err != nil {
 		return fmt.Errorf("seed tasks: %w", err)

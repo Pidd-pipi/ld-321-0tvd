@@ -7,4 +7,5 @@ export const STATUS_COLORS: Record<string, string> = {
   待派单: 'info',
   已派单: 'warning',
   已完成: 'success',
+  已撤单: 'danger',
 };

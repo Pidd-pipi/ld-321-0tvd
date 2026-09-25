@@ -31,7 +31,20 @@ export interface FarmTask {
   priority: string;
   recommendedMachine: string;
   recommendedDriver: string;
+  /** 派单/改期最终占用的农机编号；待派单或失败时为空 */
+  assignedMachine: string;
+  /** 最近一次派单/改期失败原因；成功时为空 */
+  failReason: string;
   plannedWindow: string;
+}
+
+/** 派单/改期/撤单统一响应 */
+export interface TaskActionResult {
+  taskId: string;
+  status: string;
+  assignedMachine: string;
+  failReason: string;
+  message: string;
 }
 
 export interface TrackPoint {
